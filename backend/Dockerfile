@@ -3,17 +3,15 @@ FROM node:18-slim AS builder
 WORKDIR /app
 
 # Устанавливаем необходимые зависимости для сборки
-RUN echo 'Acquire::http::Timeout "10";' > /etc/apt/apt.conf.d/99timeout && \
-    echo 'Acquire::ftp::Timeout "10";' >> /etc/apt/apt.conf.d/99timeout && \
-    apt-get update -qq --allow-releaseinfo-change && \
-    apt-get install -y --no-install-recommends --fix-missing \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     openssl \
     python3 \
     make \
     g++ \
     ca-certificates \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /etc/apt/apt.conf.d/99timeout
+    && rm -rf /var/lib/apt/lists/*
 
 # Устанавливаем зависимости для кэширования
 COPY package*.json ./
@@ -38,14 +36,12 @@ FROM node:18-slim AS production
 WORKDIR /app
 
 # Устанавливаем только необходимые runtime зависимости
-RUN echo 'Acquire::http::Timeout "10";' > /etc/apt/apt.conf.d/99timeout && \
-    echo 'Acquire::ftp::Timeout "10";' >> /etc/apt/apt.conf.d/99timeout && \
-    apt-get update -qq --allow-releaseinfo-change && \
-    apt-get install -y --no-install-recommends --fix-missing \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     openssl \
     ca-certificates \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /etc/apt/apt.conf.d/99timeout
+    && rm -rf /var/lib/apt/lists/*
 
 # Копируем только package.json для production зависимостей
 COPY package*.json ./

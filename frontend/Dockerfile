@@ -3,16 +3,14 @@ FROM node:18-slim AS builder
 WORKDIR /app
 
 # Устанавливаем зависимости для сборки
-RUN echo 'Acquire::http::Timeout "10";' > /etc/apt/apt.conf.d/99timeout && \
-    echo 'Acquire::ftp::Timeout "10";' >> /etc/apt/apt.conf.d/99timeout && \
-    apt-get update -qq --allow-releaseinfo-change && \
-    apt-get install -y --no-install-recommends --fix-missing \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     python3 \
     make \
     g++ \
     ca-certificates \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /etc/apt/apt.conf.d/99timeout
+    && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 # Используем npm ci для быстрой установки (требует package-lock.json)
