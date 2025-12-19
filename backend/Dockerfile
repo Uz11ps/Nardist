@@ -3,13 +3,17 @@ FROM node:18-slim AS builder
 WORKDIR /app
 
 # Устанавливаем необходимые зависимости для сборки
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN echo 'Acquire::http::Timeout "10";' > /etc/apt/apt.conf.d/99timeout && \
+    echo 'Acquire::ftp::Timeout "10";' >> /etc/apt/apt.conf.d/99timeout && \
+    apt-get update -qq --allow-releaseinfo-change && \
+    apt-get install -y --no-install-recommends --fix-missing \
     openssl \
     python3 \
     make \
     g++ \
-    && rm -rf /var/lib/apt/lists/*
+    ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /etc/apt/apt.conf.d/99timeout
 
 # Устанавливаем зависимости для кэширования
 COPY package*.json ./
@@ -34,11 +38,14 @@ FROM node:18-slim AS production
 WORKDIR /app
 
 # Устанавливаем только необходимые runtime зависимости
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN echo 'Acquire::http::Timeout "10";' > /etc/apt/apt.conf.d/99timeout && \
+    echo 'Acquire::ftp::Timeout "10";' >> /etc/apt/apt.conf.d/99timeout && \
+    apt-get update -qq --allow-releaseinfo-change && \
+    apt-get install -y --no-install-recommends --fix-missing \
     openssl \
     ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /etc/apt/apt.conf.d/99timeout
 
 # Копируем только package.json для production зависимостей
 COPY package*.json ./
