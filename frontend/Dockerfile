@@ -3,7 +3,11 @@ FROM ubuntu:22.04 AS builder
 WORKDIR /app
 
 # Устанавливаем Node.js и системные зависимости для Ubuntu 22.04
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
+# Используем только Ubuntu репозитории
+RUN echo "deb http://archive.ubuntu.com/ubuntu jammy main restricted universe multiverse" > /etc/apt/sources.list && \
+    echo "deb http://archive.ubuntu.com/ubuntu jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list && \
+    echo "deb http://security.ubuntu.com/ubuntu jammy-security main restricted universe multiverse" >> /etc/apt/sources.list && \
+    DEBIAN_FRONTEND=noninteractive apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
