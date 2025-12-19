@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15
     container_name: nardist_postgres_prod
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-nardist}
@@ -20,7 +20,7 @@ services:
       - nardist_network
 
   redis:
-    image: redis:7-alpine
+    image: redis:7
     container_name: nardist_redis_prod
     volumes:
       - redis_data:/data
@@ -72,7 +72,7 @@ services:
       - nardist_network
 
   nginx:
-    image: nginx:alpine
+    image: nginx:stable-slim
     container_name: nardist_nginx_prod
     ports:
       - "80:80"

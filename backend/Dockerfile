@@ -1,13 +1,15 @@
-FROM node:18-alpine AS builder
+FROM node:18-slim AS builder
 
 WORKDIR /app
 
-# Устанавливаем OpenSSL для Prisma
-# В Alpine 3.21 используется OpenSSL 3, создаем symlinks для совместимости с Prisma
-RUN apk add --no-cache openssl && \
-    mkdir -p /usr/lib && \
-    (ln -sf /usr/lib/libssl.so.3 /usr/lib/libssl.so.1.1 || true) && \
-    (ln -sf /usr/lib/libcrypto.so.3 /usr/lib/libcrypto.so.1.1 || true)
+# Устанавливаем необходимые зависимости для сборки
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    openssl \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 # Устанавливаем зависимости для кэширования
 COPY package*.json ./
@@ -27,16 +29,16 @@ COPY . .
 # Собираем приложение
 RUN npm run build
 
-FROM node:18-alpine AS production
+FROM node:18-slim AS production
 
 WORKDIR /app
 
-# Устанавливаем OpenSSL для Prisma
-# В Alpine 3.21 используется OpenSSL 3, создаем symlinks для совместимости с Prisma
-RUN apk add --no-cache openssl && \
-    mkdir -p /usr/lib && \
-    (ln -sf /usr/lib/libssl.so.3 /usr/lib/libssl.so.1.1 || true) && \
-    (ln -sf /usr/lib/libcrypto.so.3 /usr/lib/libcrypto.so.1.1 || true)
+# Устанавливаем только необходимые runtime зависимости
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 # Копируем только package.json для production зависимостей
 COPY package*.json ./
