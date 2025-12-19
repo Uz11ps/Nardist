@@ -1,29 +1,7 @@
-FROM node:18-slim AS builder
+# Используем образ с предустановленными зависимостями
+FROM nardist-backend-deps:latest AS builder
 
 WORKDIR /app
-
-# Устанавливаем необходимые зависимости для сборки
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    openssl \
-    python3 \
-    make \
-    g++ \
-    ca-certificates \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Устанавливаем зависимости для кэширования
-COPY package*.json ./
-COPY prisma ./prisma/
-
-# Используем npm ci для быстрой установки (требует package-lock.json)
-ENV npm_config_loglevel=error
-RUN npm ci --legacy-peer-deps --prefer-offline --no-audit --progress=false --silent || \
-    npm install --legacy-peer-deps --prefer-offline --no-audit --progress=false --silent
-
-# Генерируем Prisma клиент (нужны все зависимости)
-RUN npx prisma generate
 
 # Копируем исходный код
 COPY . .
