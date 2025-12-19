@@ -3,7 +3,12 @@ FROM node:18-slim AS builder
 WORKDIR /app
 
 # Устанавливаем системные зависимости
-RUN sed -i 's|http://deb.debian.org|http://cdn-fastly.deb.debian.org|g' /etc/apt/sources.list && \
+RUN if [ -f /etc/apt/sources.list ]; then \
+        sed -i 's|http://deb.debian.org|http://cdn-fastly.deb.debian.org|g' /etc/apt/sources.list; \
+    fi && \
+    if [ -d /etc/apt/sources.list.d ]; then \
+        find /etc/apt/sources.list.d -name "*.list" -exec sed -i 's|http://deb.debian.org|http://cdn-fastly.deb.debian.org|g' {} \; || true; \
+    fi && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
     python3 \
