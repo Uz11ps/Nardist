@@ -1,28 +1,22 @@
-FROM node:18-slim AS builder
+FROM ubuntu:22.04 AS builder
 
 WORKDIR /app
 
-# Создаем sources.list с нуля используя ftp.debian.org
-RUN echo "deb http://ftp.debian.org/debian bookworm main" > /etc/apt/sources.list && \
-    echo "deb http://ftp.debian.org/debian bookworm-updates main" >> /etc/apt/sources.list && \
-    ARCH=$(dpkg --print-architecture) && \
-    MIRROR="http://ftp.debian.org/debian" && \
-    mkdir -p /tmp/packages && \
-    cd /tmp/packages && \
-    apt-get update && \
-    apt-cache show python3 make g++ ca-certificates > /tmp/pkg-info.txt && \
-    for pkg in python3 make g++ ca-certificates; do \
-        FILENAME=$(grep -A 1 "^Package: $pkg$" /tmp/pkg-info.txt | grep "^Filename:" | head -1 | awk '{print $2}') && \
-        if [ -n "$FILENAME" ]; then \
-            echo "Downloading ${MIRROR}/${FILENAME}" && \
-            curl -fL "${MIRROR}/${FILENAME}" -o "${pkg}.deb" && \
-            echo "Downloaded ${pkg}.deb" || echo "Failed to download $pkg"; \
-        fi; \
-    done && \
-    ls -la *.deb && \
-    dpkg -i *.deb 2>/dev/null || apt-get install -f -y && \
+# Устанавливаем Node.js и системные зависимости для Ubuntu 22.04
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    gnupg && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    nodejs \
+    python3 \
+    make \
+    g++ \
+    ca-certificates && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/packages /tmp/pkg-info.txt
+    rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 # Используем npm ci для быстрой установки (требует package-lock.json)
