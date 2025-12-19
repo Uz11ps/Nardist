@@ -2,19 +2,16 @@ FROM node:18-slim AS builder
 
 WORKDIR /app
 
-# Используем Fastly CDN напрямую для быстрой загрузки
-RUN echo 'Acquire::http::Timeout "10";' > /etc/apt/apt.conf.d/99timeout && \
-    echo 'Acquire::ftp::Timeout "10";' >> /etc/apt/apt.conf.d/99timeout && \
-    sed -i 's|http://deb.debian.org|http://cdn-fastly.deb.debian.org|g' /etc/apt/sources.list.d/*.list 2>/dev/null || true && \
-    sed -i 's|http://deb.debian.org|http://cdn-fastly.deb.debian.org|g' /etc/apt/sources.list 2>/dev/null || true && \
-    DEBIAN_FRONTEND=noninteractive apt-get update -o Acquire::http::Timeout=10 2>&1 | grep -v "^Ign:" || true && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+# Устанавливаем системные зависимости
+RUN sed -i 's|http://deb.debian.org|http://cdn-fastly.deb.debian.org|g' /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
     python3 \
     make \
     g++ \
-    ca-certificates \
-    && apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /etc/apt/apt.conf.d/99timeout
+    ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 # Используем npm ci для быстрой установки (требует package-lock.json)
