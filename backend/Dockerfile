@@ -44,8 +44,8 @@ COPY prisma ./prisma/
 
 # Устанавливаем только production зависимости с оптимизацией
 ENV npm_config_loglevel=error
-RUN npm ci --only=production --legacy-peer-deps --prefer-offline --no-audit --progress=false --silent || \
-    npm install --only=production --legacy-peer-deps --prefer-offline --no-audit --progress=false --silent
+RUN npm ci --omit=dev --legacy-peer-deps --prefer-offline --no-audit --progress=false --silent || \
+    npm install --omit=dev --legacy-peer-deps --prefer-offline --no-audit --progress=false --silent
 
 # Копируем собранное приложение и сгенерированный Prisma клиент
 COPY --from=builder /app/dist ./dist

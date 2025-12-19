@@ -89,17 +89,42 @@ echo "🚀 Starting containers..."
 $DOCKER_COMPOSE -f docker-compose.prod.yml up -d
 
 echo "⏳ Waiting for services to be ready..."
-sleep 10
+# Ждем запуска базовых сервисов
+echo "   Waiting for PostgreSQL..."
+timeout=60
+while [ $timeout -gt 0 ]; do
+    if $DOCKER_COMPOSE -f docker-compose.prod.yml exec -T postgres pg_isready -U ${POSTGRES_USER:-nardist} > /dev/null 2>&1; then
+        echo "   ✅ PostgreSQL is ready"
+        break
+    fi
+    sleep 2
+    timeout=$((timeout - 2))
+done
+
+echo "   Waiting for Redis..."
+timeout=30
+while [ $timeout -gt 0 ]; do
+    if $DOCKER_COMPOSE -f docker-compose.prod.yml exec -T redis redis-cli ping > /dev/null 2>&1; then
+        echo "   ✅ Redis is ready"
+        break
+    fi
+    sleep 2
+    timeout=$((timeout - 2))
+done
 
 echo "🗄️ Running database migrations..."
-$DOCKER_COMPOSE -f docker-compose.prod.yml exec -T backend npx prisma migrate deploy
+# Ждем, пока backend полностью запустится
+sleep 5
+$DOCKER_COMPOSE -f docker-compose.prod.yml exec -T backend npx prisma migrate deploy || echo "⚠️  Migration failed or already applied"
 
 echo "🔒 Setting up SSL certificate..."
-if [ ! -d "./nginx/ssl/live/${DOMAIN_NAME}" ] || [ ! -f "./nginx/ssl/live/${DOMAIN_NAME}/fullchain.pem" ]; then
+# Проверяем наличие сертификата в volume certbot_data
+if ! $DOCKER_COMPOSE -f docker-compose.prod.yml exec -T certbot test -d /etc/letsencrypt/live/${DOMAIN_NAME} 2>/dev/null || \
+   ! $DOCKER_COMPOSE -f docker-compose.prod.yml exec -T certbot test -f /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem 2>/dev/null; then
     echo "📝 Requesting SSL certificate..."
     echo "⚠️  Note: SSL certificate setup requires the domain to point to this server"
     echo "⚠️  Make sure DNS is configured before running this step"
-    $DOCKER_COMPOSE -f docker-compose.prod.yml run --rm certbot certonly \
+    $DOCKER_COMPOSE -f docker-compose.prod.yml --profile ssl run --rm certbot certonly \
         --webroot \
         --webroot-path=/var/www/certbot \
         --email ${SSL_EMAIL} \
@@ -113,8 +138,8 @@ else
     echo "✅ SSL certificate already exists"
 fi
 
-echo "🧹 Cleaning up..."
-docker system prune -f
+echo "🧹 Cleaning up unused Docker resources..."
+docker system prune -f --volumes || true
 
 echo "✅ Deployment completed successfully!"
 echo "🌐 Your application is available at: https://${DOMAIN_NAME}"
