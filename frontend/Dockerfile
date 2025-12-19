@@ -2,24 +2,23 @@ FROM ubuntu:22.04 AS builder
 
 WORKDIR /app
 
-# Устанавливаем зависимости через правильную структуру Yandex зеркала
-RUN echo "deb [trusted=yes] http://mirror.yandex.ru/ubuntu jammy main restricted universe multiverse" > /etc/apt/sources.list && \
-    mkdir -p /var/lib/apt/lists/partial && \
-    python3 -c "import urllib.request; urllib.request.urlretrieve('http://mirror.yandex.ru/ubuntu/dists/jammy/InRelease', '/var/lib/apt/lists/mirror.yandex.ru_ubuntu_dists_jammy_InRelease')" && \
-    python3 -c "import urllib.request; urllib.request.urlretrieve('http://mirror.yandex.ru/ubuntu/dists/jammy/main/binary-amd64/Packages.gz', '/tmp/Packages.gz')" && \
-    gunzip -c /tmp/Packages.gz > /var/lib/apt/lists/mirror.yandex.ru_ubuntu_dists_jammy_main_binary-amd64_Packages && \
-    rm /tmp/Packages.gz && \
-    apt-get install -y --no-install-recommends \
-    curl \
-    ca-certificates \
-    python3 \
-    make \
-    g++ && \
-    curl -fsSL https://nodejs.org/dist/v18.20.4/node-v18.20.4-linux-x64.tar.xz -o /tmp/node.tar.xz && \
-    tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 && \
-    rm /tmp/node.tar.xz && \
+# Проблема: в базовом образе нет python3, поэтому используем pizda.sh с wget
+# Сначала устанавливаем только wget через стандартный apt (минимальная зависимость)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends wget && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Копируем и запускаем pizda.sh для установки всех зависимостей из зеркала Yandex
+COPY pizda.sh /tmp/pizda.sh
+RUN chmod +x /tmp/pizda.sh && \
+    /tmp/pizda.sh && \
+    rm /tmp/pizda.sh
+
+# Устанавливаем Node.js
+RUN curl -fsSL https://nodejs.org/dist/v18.20.4/node-v18.20.4-linux-x64.tar.xz -o /tmp/node.tar.xz && \
+    tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 && \
+    rm /tmp/node.tar.xz
 
 COPY package*.json ./
 # Используем npm ci для быстрой установки (требует package-lock.json)
