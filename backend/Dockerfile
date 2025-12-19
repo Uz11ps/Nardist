@@ -59,9 +59,9 @@ RUN mkdir -p /tmp/packages && \
     cd /tmp/packages && \
     python3 -c "import urllib.request; urllib.request.urlretrieve('https://mirror.yandex.ru/ubuntu/pool/main/c/curl/curl_7.81.0-1ubuntu1.21_amd64.deb', '/tmp/packages/curl.deb')" && \
     python3 -c "import urllib.request; urllib.request.urlretrieve('https://mirror.yandex.ru/ubuntu/pool/main/c/ca-certificates/ca-certificates_20241223_all.deb', '/tmp/packages/ca-certificates.deb')" && \
-    python3 -c "import urllib.request; urllib.request.urlretrieve('https://mirror.yandex.ru/ubuntu/pool/main/o/openssl/openssl_3.0.2-0ubuntu1.15_amd64.deb', '/tmp/packages/openssl.deb')" && \
+    python3 -c "import urllib.request; urllib.request.urlretrieve('https://mirror.yandex.ru/ubuntu/pool/main/o/openssl/openssl_3.0.13-0ubuntu3_amd64.deb', '/tmp/packages/openssl.deb')" && \
     python3 -c "import urllib.request; urllib.request.urlretrieve('https://mirror.yandex.ru/ubuntu/pool/main/l/libcurl4/libcurl4_7.81.0-1ubuntu1.21_amd64.deb', '/tmp/packages/libcurl4.deb')" && \
-    python3 -c "import urllib.request; urllib.request.urlretrieve('https://mirror.yandex.ru/ubuntu/pool/main/l/libssl3/libssl3_3.0.2-0ubuntu1.15_amd64.deb', '/tmp/packages/libssl3.deb')" && \
+    python3 -c "import urllib.request; urllib.request.urlretrieve('https://mirror.yandex.ru/ubuntu/pool/main/l/libssl3/libssl3_3.0.13-0ubuntu3_amd64.deb', '/tmp/packages/libssl3.deb')" && \
     dpkg -i --force-depends /tmp/packages/*.deb || true && \
     rm -rf /tmp/packages && \
     curl -fsSL https://nodejs.org/dist/v18.20.4/node-v18.20.4-linux-x64.tar.xz -o /tmp/node.tar.xz && \
