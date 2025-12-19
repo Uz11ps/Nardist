@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15
@@ -72,7 +70,7 @@ services:
       - nardist_network
 
   nginx:
-    image: nginx:stable-slim
+    image: nginx:latest
     container_name: nardist_nginx_prod
     ports:
       - "80:80"
