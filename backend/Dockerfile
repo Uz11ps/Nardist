@@ -3,12 +3,12 @@ FROM ubuntu:22.04 AS builder
 WORKDIR /app
 
 # Устанавливаем зависимости через правильную структуру Yandex зеркала
-# Используем dists/jammy/InRelease и Packages напрямую
+# Используем Python для скачивания, так как curl еще не установлен
 RUN echo "deb [trusted=yes] http://mirror.yandex.ru/ubuntu jammy main restricted universe multiverse" > /etc/apt/sources.list && \
     echo "deb [trusted=yes] http://mirror.yandex.ru/ubuntu jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list && \
     mkdir -p /var/lib/apt/lists/partial && \
-    curl -fsSL http://mirror.yandex.ru/ubuntu/dists/jammy/InRelease -o /var/lib/apt/lists/mirror.yandex.ru_ubuntu_dists_jammy_InRelease && \
-    curl -fsSL http://mirror.yandex.ru/ubuntu/dists/jammy/main/binary-amd64/Packages.gz -o /tmp/Packages.gz && \
+    python3 -c "import urllib.request; urllib.request.urlretrieve('http://mirror.yandex.ru/ubuntu/dists/jammy/InRelease', '/var/lib/apt/lists/mirror.yandex.ru_ubuntu_dists_jammy_InRelease')" && \
+    python3 -c "import urllib.request; urllib.request.urlretrieve('http://mirror.yandex.ru/ubuntu/dists/jammy/main/binary-amd64/Packages.gz', '/tmp/Packages.   gz')" && \
     gunzip -c /tmp/Packages.gz > /var/lib/apt/lists/mirror.yandex.ru_ubuntu_dists_jammy_main_binary-amd64_Packages && \
     rm /tmp/Packages.gz && \
     apt-get install -y --no-install-recommends \
@@ -49,8 +49,8 @@ WORKDIR /app
 # Устанавливаем зависимости через правильную структуру Yandex зеркала
 RUN echo "deb [trusted=yes] http://mirror.yandex.ru/ubuntu jammy main restricted universe multiverse" > /etc/apt/sources.list && \
     mkdir -p /var/lib/apt/lists/partial && \
-    curl -fsSL http://mirror.yandex.ru/ubuntu/dists/jammy/InRelease -o /var/lib/apt/lists/mirror.yandex.ru_ubuntu_dists_jammy_InRelease && \
-    curl -fsSL http://mirror.yandex.ru/ubuntu/dists/jammy/main/binary-amd64/Packages.gz -o /tmp/Packages.gz && \
+    python3 -c "import urllib.request; urllib.request.urlretrieve('http://mirror.yandex.ru/ubuntu/dists/jammy/InRelease', '/var/lib/apt/lists/mirror.yandex.ru_ubuntu_dists_jammy_InRelease')" && \
+    python3 -c "import urllib.request; urllib.request.urlretrieve('http://mirror.yandex.ru/ubuntu/dists/jammy/main/binary-amd64/Packages.gz', '/tmp/Packages.gz')" && \
     gunzip -c /tmp/Packages.gz > /var/lib/apt/lists/mirror.yandex.ru_ubuntu_dists_jammy_main_binary-amd64_Packages && \
     rm /tmp/Packages.gz && \
     apt-get install -y --no-install-recommends \
