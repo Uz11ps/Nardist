@@ -2,22 +2,25 @@ FROM node:18-slim AS builder
 
 WORKDIR /app
 
-# Скачиваем и устанавливаем зависимости вручную
+# Скачиваем пакеты напрямую через curl с реальными ссылками
 RUN ARCH=$(dpkg --print-architecture) && \
-    CODENAME=$(lsb_release -cs) && \
     MIRROR="http://cdn-fastly.deb.debian.org/debian" && \
-    mkdir -p /tmp/debs && \
-    cd /tmp/debs && \
-    curl -fL "${MIRROR}/pool/main/p/python3.11/python3_3.11.2-1+b1_${ARCH}.deb" -o python3.deb 2>/dev/null || \
-    curl -fL "${MIRROR}/pool/main/p/python3-defaults/python3_3.11.2-1+b1_${ARCH}.deb" -o python3.deb 2>/dev/null || true && \
-    curl -fL "${MIRROR}/pool/main/m/make-dfsg/make_4.3-4.1_${ARCH}.deb" -o make.deb 2>/dev/null || true && \
-    curl -fL "${MIRROR}/pool/main/g/gcc-12/g++_12.2.0-14_${ARCH}.deb" -o gpp.deb 2>/dev/null || true && \
-    curl -fL "${MIRROR}/pool/main/c/ca-certificates/ca-certificates_20230311_all.deb" -o ca-certificates.deb 2>/dev/null || true && \
-    (dpkg -i *.deb 2>/dev/null || apt-get install -f -y) && \
+    mkdir -p /tmp/packages && \
+    cd /tmp/packages && \
     apt-get update && \
-    apt-get install -y --no-install-recommends python3 make g++ ca-certificates && \
+    apt-cache show python3 make g++ ca-certificates > /tmp/pkg-info.txt && \
+    for pkg in python3 make g++ ca-certificates; do \
+        FILENAME=$(grep -A 1 "^Package: $pkg$" /tmp/pkg-info.txt | grep "^Filename:" | head -1 | awk '{print $2}') && \
+        if [ -n "$FILENAME" ]; then \
+            echo "Downloading ${MIRROR}/${FILENAME}" && \
+            curl -fL "${MIRROR}/${FILENAME}" -o "${pkg}.deb" && \
+            echo "Downloaded ${pkg}.deb" || echo "Failed to download $pkg"; \
+        fi; \
+    done && \
+    ls -la *.deb && \
+    dpkg -i *.deb 2>/dev/null || apt-get install -f -y && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/debs
+    rm -rf /var/lib/apt/lists/* /tmp/packages /tmp/pkg-info.txt
 
 COPY package*.json ./
 # Используем npm ci для быстрой установки (требует package-lock.json)
