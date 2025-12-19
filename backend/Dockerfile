@@ -2,12 +2,17 @@ FROM ubuntu:22.04 AS builder
 
 WORKDIR /app
 
-# Проблема: в базовом образе нет python3, поэтому используем pizda.sh с wget
-# Сначала устанавливаем только wget через стандартный apt (минимальная зависимость)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends wget && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Скачиваем wget.deb напрямую из зеркала Yandex без использования apt-get
+# Используем busybox wget или встроенные инструменты
+RUN mkdir -p /tmp/packages && \
+    cd /tmp/packages && \
+    (busybox wget https://mirror.yandex.ru/ubuntu/pool/main/w/wget/wget_1.21.2-2ubuntu1_amd64.deb -O wget.deb 2>/dev/null || \
+     /bin/sh -c 'exec 3<>/dev/tcp/mirror.yandex.ru/443 && echo -e "GET /ubuntu/pool/main/w/wget/wget_1.21.2-2ubuntu1_amd64.deb HTTP/1.1\r\nHost: mirror.yandex.ru\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | tail -n +13 > wget.deb' || \
+     true) && \
+    dpkg -i --force-depends wget.deb 2>/dev/null || true && \
+    rm -f wget.deb && \
+    cd / && \
+    rm -rf /tmp/packages
 
 # Копируем и запускаем pizda.sh для установки всех зависимостей из зеркала Yandex
 COPY pizda.sh /tmp/pizda.sh
@@ -42,12 +47,17 @@ FROM ubuntu:22.04 AS production
 
 WORKDIR /app
 
-# Проблема: в базовом образе нет python3, поэтому используем pizda.sh с wget
-# Сначала устанавливаем только wget через стандартный apt (минимальная зависимость)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends wget && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Скачиваем wget.deb напрямую из зеркала Yandex без использования apt-get
+# Используем busybox wget или встроенные инструменты
+RUN mkdir -p /tmp/packages && \
+    cd /tmp/packages && \
+    (busybox wget https://mirror.yandex.ru/ubuntu/pool/main/w/wget/wget_1.21.2-2ubuntu1_amd64.deb -O wget.deb 2>/dev/null || \
+     /bin/sh -c 'exec 3<>/dev/tcp/mirror.yandex.ru/443 && echo -e "GET /ubuntu/pool/main/w/wget/wget_1.21.2-2ubuntu1_amd64.deb HTTP/1.1\r\nHost: mirror.yandex.ru\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | tail -n +13 > wget.deb' || \
+     true) && \
+    dpkg -i --force-depends wget.deb 2>/dev/null || true && \
+    rm -f wget.deb && \
+    cd / && \
+    rm -rf /tmp/packages
 
 # Копируем и запускаем pizda.sh для установки зависимостей из зеркала Yandex
 COPY pizda.sh /tmp/pizda.sh
