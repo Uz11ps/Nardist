@@ -35,13 +35,11 @@ docker-compose exec backend npx prisma migrate dev
 
 ### Production развертывание
 
-См. [DEPLOYMENT.md](./DEPLOYMENT.md) для подробных инструкций по развертыванию на сервере.
+**📖 Полное руководство по развертыванию:** [DEPLOY.md](./DEPLOY.md)
 
-**Production URL**: https://nardist.online
+Это подробное руководство поможет вам развернуть приложение на чистом сервере Ubuntu 22.04 с нуля.
 
-**Домен**: `nardist.online`
-
-См. [SETUP_DOMAIN.md](./SETUP_DOMAIN.md) для быстрой настройки домена.
+**🌐 Production URL:** https://nardist.online
 
 ## Структура проекта
 
@@ -78,32 +76,24 @@ nardist/
 Для обновления проекта с последними изменениями из репозитория:
 
 ```bash
-cd /opt/Nardist
-chmod +x scripts/update-from-git.sh
-./scripts/update-from-git.sh
-```
+cd /opt/nardist
 
-Или вручную:
-
-```bash
 # Сохранить локальные изменения и обновить
 git stash
 git pull origin main
 git stash pop
 
-# Или откатить локальные изменения и обновить
-git reset --hard HEAD
-git pull origin main
+# Пересобрать и перезапустить
+docker compose -f docker-compose.prod.yml build --no-cache backend frontend
+docker compose -f docker-compose.prod.yml up -d
+
+# Применить миграции (если есть новые)
+docker compose -f docker-compose.prod.yml exec backend npx prisma migrate deploy
 ```
 
 ## Документация
 
-- [DEPLOYMENT.md](./DEPLOYMENT.md) - Руководство по развертыванию
-- [QUICK_START.md](./QUICK_START.md) - Быстрый старт
-- [SETUP_DOMAIN.md](./SETUP_DOMAIN.md) - Настройка домена
-- [SETUP_ENV.md](./SETUP_ENV.md) - Настройка переменных окружения
-- [GITHUB_ACTIONS_SETUP.md](./GITHUB_ACTIONS_SETUP.md) - Настройка CI/CD с GitHub Actions
-- [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Устранение неполадок
+- **[DEPLOY.md](./DEPLOY.md)** - Полное руководство по развертыванию на Ubuntu 22.04
 - [backend/README.md](./backend/README.md) - Документация бэкенда
 - [frontend/README.md](./frontend/README.md) - Документация фронтенда
 

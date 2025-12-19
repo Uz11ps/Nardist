@@ -26,17 +26,21 @@ if ! command -v docker &> /dev/null; then
     rm get-docker.sh
     
     # Добавляем пользователя в группу docker
-    usermod -aG docker $SUDO_USER
+    if [ -n "$SUDO_USER" ]; then
+        usermod -aG docker $SUDO_USER
+    else
+        usermod -aG docker $USER
+    fi
     echo "✅ Docker installed. You may need to log out and log back in for group changes to take effect."
 else
     echo "✅ Docker already installed"
 fi
 
-# Install Docker Compose
-if ! command -v docker-compose &> /dev/null; then
-    echo "🐳 Installing Docker Compose..."
-    curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
+# Install Docker Compose V2
+if ! docker compose version &> /dev/null; then
+    echo "🐳 Installing Docker Compose V2..."
+    apt install -y docker-compose-plugin
+    echo "✅ Docker Compose V2 installed"
 else
     echo "✅ Docker Compose already installed"
 fi
@@ -51,11 +55,19 @@ ufw --force enable
 # Create application directory
 echo "📁 Creating application directory..."
 mkdir -p /opt/nardist
-chown -R $SUDO_USER:$SUDO_USER /opt/nardist
+if [ -n "$SUDO_USER" ]; then
+    chown -R $SUDO_USER:$SUDO_USER /opt/nardist
+else
+    chown -R $USER:$USER /opt/nardist
+fi
 
 echo "✅ Server initialization completed!"
+echo ""
 echo "📝 Next steps:"
-echo "   1. Clone your repository: git clone https://github.com/Uz11ps/Nardist.git /opt/Nardist"
-echo "   2. Copy .env.example to .env and configure it"
-echo "   3. Run ./deploy.sh"
+echo "   1. cd /opt/nardist"
+echo "   2. git clone https://github.com/Uz11ps/Nardist.git ."
+echo "   3. Create .env file (see DEPLOY.md for details)"
+echo "   4. Run ./deploy.sh"
+echo ""
+echo "📖 For detailed instructions, see DEPLOY.md"
 
