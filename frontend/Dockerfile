@@ -2,9 +2,11 @@ FROM node:18-slim AS builder
 
 WORKDIR /app
 
-# Скачиваем пакеты напрямую через curl с реальными ссылками
-RUN ARCH=$(dpkg --print-architecture) && \
-    MIRROR="http://cdn-fastly.deb.debian.org/debian" && \
+# Создаем sources.list с нуля используя ftp.debian.org
+RUN echo "deb http://ftp.debian.org/debian bookworm main" > /etc/apt/sources.list && \
+    echo "deb http://ftp.debian.org/debian bookworm-updates main" >> /etc/apt/sources.list && \
+    ARCH=$(dpkg --print-architecture) && \
+    MIRROR="http://ftp.debian.org/debian" && \
     mkdir -p /tmp/packages && \
     cd /tmp/packages && \
     apt-get update && \
